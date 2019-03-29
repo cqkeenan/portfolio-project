@@ -2,16 +2,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include "scanner.h"
-#include "array.h"
+#include "movie.h"
 
 int main(void) {
 	printf("Please give this program a moment to load the database to memory.\n");
 	Array a;
 	initArray(&a, 4);
-	BuildArray(&a);
+	int i = 0;
+	FILE *dataFile;
+	dataFile = fopen("movie_records", "r");
+	while(1) {
+		struct movie newMovie;
+		char *line;
+		line = readLine(dataFile);
+		if (feof(dataFile)) break;
+		newMovie.identifier = strtok(line, "\t");
+		newMovie.type = strtok(NULL, "\t");
+		newMovie.primaryTitle = strtok(NULL, "\t");
+		newMovie.originalTitle = strtok(NULL, "\t");
+		newMovie.isAdult = strtok(NULL, "\t");
+		newMovie.startYear = strtok(NULL, "\t");
+		newMovie.endYear = strtok(NULL, "\t");
+		newMovie.runtimeMinutes = strtok(NULL, "\t");
+		newMovie.genres = strtok(NULL, "\t");
+		insertArray(&a, newMovie);
+		++i;
+	}
+	fclose(dataFile);
+	//quickSort(&a, 0, i);
 	char choice = '0';
-	printf("Welcome to the IMDB movie database. To select an option, type the number associated with your choice.\n\n");
 interface:
+	printf("Welcome to the IMDB movie database. To select an option, type the number associated with your choice.\n\n");
 	printf("1. Create new catalog\n");
 	printf("2. Display existing catalog\n");
 	printf("3. Update existing catalog\n");
@@ -19,7 +40,6 @@ interface:
 	scanf("%c", &choice);
 	switch(choice) {
 		case '1' :
-			printf("\nFIXME Create\n");
 			goto create;
 		case '2' :
 			printf("\nFIXME Display\n");
@@ -44,17 +64,40 @@ create: ;
 	char *filename = strcat(name, extension);
 	FILE *userFile;
 	userFile = fopen(filename, "w");
-	fprintf(userFile, "test file writing\n");
+addMovie:
+	char *search;
+	int matches = 0;
+	int matchFound = 0;
+	printf("Search for a movie: ");
+	while((getchar() != '\n'));
+	search = readLine(stdin);
+	for(int val = 0; val < i; val++) {
+		matchFound = contains(a.array[val].primaryTitle, search);
+		if(matchFound == 1) {
+			printMovie(&a, val);
+			++matches;
+		}
+		if(matches == 25) {
+			printf("First %d matches displayed. If you do not see your movie, please enter a more specific search.\n", matches);
+			break;
+		}
+	}
 	fclose(userFile);
-	while ((getchar() != '\n'));
 	goto interface;
 display:
 	printf("FIXME D\n\n");
 	goto interface;
 update:
-	printf("FIXME U\n\n");
-	goto interface;
+	printf("Enter the name of your log file (format is {yourfilenamehere}.log): ");	
+	name = readToken(stdin);
+	printf("Opening %s.\n", name);
+	userFile = fopen(name, "rw");
+	if(userFile == NULL) {
+		printf("Error: File \"%s\" could not be found. Returning to main menu.\n\n", name);
+		goto interface;
+	}
 end:
+	freeArray(&a);
 	return 0;
 }
 
