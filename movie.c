@@ -19,45 +19,16 @@ void insertArray(Array *a, struct movie m) {
 	a->array[a->used++] = m;
 }
 
-/*void swap(struct movie* a, struct movie* b) {
-	struct movie t = *a;
-	*a = *b;
-	*b = t;
-}
-
-int partition(Array *a, int low, int high) {
-	char *pivot;
-	pivot = a->array[high].primaryTitle;
-	int i = (low - 1);
-	for (int j = low; j <= high - 1; j++) {
-		if (strcmp(a->array[j].primaryTitle, pivot) <= 0) {
-			i++;
-			swap(&a->array[i], &a->array[j]);
-		}
-	}
-	swap(&a->array[i + 1], &a->array[high]);
-	return (i + 1);
-}
-
-void quickSort(Array *a, int low, int high) {
-	if (low < high) {
-		int pi = partition(a, low, high);
-		quickSort(a, low, pi - 1);
-		quickSort(a, pi + 1, high);
-	}
-}*/
-
-
 int exactMatch(char *title, char *search) {
 	if(*title == '\0' && *search != '\0') return 0;
 	if(*search == '\0') return 1;
-	if(*title == *search || *title == *search - 32 || *title == *search + 32) return exactMatch(title + 1, search + 1);
+	if(*title == *search) return exactMatch(title + 1, search + 1);
 	return 0;
 }
 
 int contains(char *title, char *search) {
 	if(*title == '\0') return 0;
-	if(*title == *search || *title == *search - 32 || *title == *search + 32) {
+	if(*title == *search) {
 		if(exactMatch(title, search) == 1) return 1;
 		else return contains(title + 1, search);
 	}
@@ -65,7 +36,7 @@ int contains(char *title, char *search) {
 }
 
 void printMovie(Array *a, int key) {
-	printf("%d. %s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", key + 1, a->array[key].identifier, a->array[key].type, a->array[key].primaryTitle, a->array[key].originalTitle, a->array[key].isAdult, a->array[key].startYear, a->array[key].endYear, a->array[key].runtimeMinutes, a->array[key].genres);
+	printf("%d.\t%s\t%s\t%s\t%s\n", key + 1, a->array[key].primaryTitle, a->array[key].startYear, a->array[key].runtimeMinutes, a->array[key].genres);
 	return;
 }
 

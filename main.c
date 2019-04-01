@@ -6,7 +6,7 @@
 #include "movie.h"
 
 int main(void) {
-	printf("Please give this program a moment to load the database to memory.\n");
+	printf("Please give this program a moment to load the database to memory. This will take roughly 30-40 seconds.\n");
 	Array a;
 	initArray(&a, 4);
 	int i = 0;
@@ -30,7 +30,6 @@ int main(void) {
 		++i;
 	}
 	fclose(dataFile);
-	//quickSort(&a, 0, i);
 	char choice = '0';
 interface:
 	printf("Welcome to the IMDB movie database. To select an option, type the number associated with your choice.\n\n");
@@ -39,30 +38,27 @@ interface:
 	printf("3. Update existing catalog\n");
 	printf("4. Exit program\n\n");
 	choice = readChar(stdin);
+	while(getchar() != '\n');
 	switch(choice) {
 		case '1' :
 			goto create;
 		case '2' :
-			printf("\nFIXME Display\n");
 			goto display;
 		case '3' :
-			printf("\nFIXME Update/delete\n");
 			goto update;
 		case '4' :
 			printf("\nThank you for using this program.\n");
 			goto end;
 		default :
 			printf("\nInvalid input, please try again.\n\n");
-			while ((getchar() != '\n'));
 			goto interface;
 	}
 create: ;
-	char *name;
-	char extension[4] = ".log";
-	printf("Enter a name for your catalog.\n\n");
-	name = readToken(stdin);
-	printf("Creating your catalog with filename %s.log.\n\n", name);
-	char *filename = strcat(name, extension);
+	char *filename;
+	printf("Enter a name for your catalog file using the format {yourfilename}.log.\n\n");
+	filename = readToken(stdin);
+	printf("Creating your catalog with filename %s.\n\n", filename);
+	while(getchar() != '\n');
 	FILE *userFile;
 	userFile = fopen(filename, "w");
 addMovie: ;
@@ -70,15 +66,15 @@ addMovie: ;
 	int matches = 0;
 	int matchFound = 0;
 	printf("Search for a movie: ");
-	while ((getchar() != '\n'));
 	search = readLine(stdin);
 	for(int val = 0; val < i; val++) {
 		matchFound = contains(a.array[val].primaryTitle, search);
 		if(matchFound == 1) {
+			if(matches == 0) printf("#\tTitle\t\tYear\tRunning Time\tGenre(s)\n\n");
 			printMovie(&a, val);
 			++matches;
 		}
-		if(matches == 25) {
+		if(matches == 50) {
 			printf("\nFirst %d matches displayed. If you do not see your movie, please enter a more specific search.\n\n", matches);
 			break;
 		}
@@ -92,7 +88,10 @@ enterNum: ;
 	printf("To add a movie to your log file, type the number associated with the movie you wish to add. If you do not wish to add any of the movies listed, type \"0\" to see more options.\n\n");
 	printf("WARNING: Selecting a number not listed above could either add a random movie to your log.\n\n");
 	movieNum = readInt(stdin);
-	if(movieNum == 0) goto interface;
+	if(movieNum == 0) {
+		fclose(userFile);
+		goto updateMenu;
+	}
 	else if(movieNum >= i) {
 		printf("The number you entered is outside the bounds of the database. please enter a valid number.\n\n");
 		goto enterNum;
@@ -143,14 +142,15 @@ dateEntry:
 	goto updateMenu;
 display:
 	printf("Enter the name of your log file (format is {yourfilenamehere}.log): ");
-        name = readToken(stdin);
-        printf("Opening %s.\n", name);
-        userFile = fopen(name, "r");
+        filename = readToken(stdin);
+        printf("Opening %s.\n", filename);
+        userFile = fopen(filename, "r");
         if(userFile == 0) {
-                printf("Error: File \"%s\" could not be found. Returning to main menu.\n\n", name);
+                printf("Error: File \"%s\" could not be found. Returning to main menu.\n\n", filename);
                 goto interface;
         }
-displayMovies:
+displayMovies: ;
+	printf("\n\n");
 	char c = fgetc(userFile);
 	while (c != EOF) {
 		printf("%c", c);
@@ -160,30 +160,31 @@ displayMovies:
 	goto updateMenu;
 update:
 	printf("Enter the name of your log file (format is {yourfilenamehere}.log): ");	
-	name = readToken(stdin);
-	printf("Opening %s.\n", name);
-	userFile = fopen(name, "r");
+	filename = readLine(stdin);
+	printf("Opening %s.\n", filename);
+	userFile = fopen(filename, "r");
 	if(userFile == 0) {
-		printf("Error: File \"%s\" could not be found. Returning to main menu.\n\n", name);
+		printf("Error: File \"%s\" could not be found. Returning to main menu.\n\n", filename);
 		goto interface;
 	}
 	fclose(userFile);
 updateMenu:
-	printf("What would you like to do?\n\n");
+	printf("\n\nWhat would you like to do?\n\n");
 	printf("1. Add a movie\n2. Delete a movie\n3. Update existing movie\n4. Display current catalog\n5. Return to main menu\n\n");
 	choice = readChar(stdin);
+	while(getchar() != '\n');
 	switch(choice) {
 		case '1' :
-			userFile = fopen(name, "a");
+			userFile = fopen(filename, "a");
 			goto addMovie;
 		case '2' :
-			userFile = fopen(name, "rw");
+			userFile = fopen(filename, "r");
 			goto deleteMovie;
 		case '3' :
-			userFile = fopen(name, "rw");
+			userFile = fopen(filename, "r");
 			goto updateMovie;
 		case '4' :
-			userFile = fopen(name, "r");
+			userFile = fopen(filename, "r");
 			goto displayMovies;
 		case '5' :
 			fclose(userFile);
@@ -193,10 +194,139 @@ updateMenu:
 			goto updateMenu;
 	}
 deleteMovie:
-	printf("FIX DELETE\n");
+	printf("\n\n");
+        c = fgetc(userFile);
+        while (c != EOF) {
+                printf("%c", c);
+                c = fgetc(userFile);
+        }
+        fclose(userFile);
+	printf("\n\nWhich movie would you like to delete? Type the line number of the movie you wish to delete.\n");
+	scanf("%d", &movieNum);
+	while(getchar() != '\n');
+	userFile = fopen(filename, "r");
+	FILE *newFile;
+	newFile = fopen("newFile.log", "w");
+	int lineNum = 1;
+	char *tempLine;
+	while(1) {
+		tempLine = readLine(userFile);
+		if(feof(userFile)) break;
+		if(lineNum == movieNum) {
+			lineNum++;
+		}
+		else {
+			fputs(tempLine, newFile);
+			fprintf(newFile, "\n");
+			lineNum++;
+			}
+	}
+	fclose(userFile);
+	fclose(newFile);
+	remove(filename);
+	rename("newFile.log", filename);
+	printf("Movie deleted.\n\n");
 	goto updateMenu;
 updateMovie:
-	printf("FIX DELETE\n");
+	printf("\n\n");
+        c = fgetc(userFile);
+        while (c != EOF) {
+                printf("%c", c);
+                c = fgetc(userFile);
+        }
+        fclose(userFile);
+        printf("\n\nWhich movie would you like to update? Type the line number of the movie you wish to update.\n\n");
+        scanf("%d", &movieNum);
+        while(getchar() != '\n');
+updateChoice:
+	printf("Which field would you like to update?\n\n");
+	printf("1. Media type\n2. Date acquired\n\n");
+	choice = readChar(stdin);
+	while(getchar() != '\n');
+	if(choice == '1') {
+updateMedia:
+		printf("Which media type do you own?\n\n");
+		printf("1. DVD\n2. Bluray\n3. Digital\n\n");
+		choice = readChar(stdin);
+		while(getchar() != '\n');
+		if(choice > '3' || choice < '1') {
+			printf("Error: Invalid choice. Please try again.\n\n");
+			goto updateMedia;
+		}
+		userFile = fopen(filename, "r");
+		newFile = fopen("newFile.log", "w");
+		lineNum = 1;
+		while(1) {
+                tempLine = readLine(userFile);
+                if(feof(userFile)) break;
+                if(lineNum == movieNum) {
+                        fprintf(newFile, "%s\t", strtok(tempLine, "\t"));
+			fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+			fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+			fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+			strtok(NULL, "\t");
+			if(choice == '1') fprintf(newFile, "DVD\t");
+			else if(choice == '2') fprintf(newFile, "Bluray\t");
+			else fprintf(newFile, "Digital\t");
+			fprintf(newFile, "%s", strtok(NULL, "\n"));	
+			fprintf(newFile, "\n");
+			lineNum++;
+                }
+                else {
+                        fputs(tempLine, newFile);
+                        fprintf(newFile, "\n");
+                        lineNum++;
+                        }
+        }
+        fclose(userFile);
+        fclose(newFile);
+        remove(filename);
+        rename("newFile.log", filename);
+        printf("Media type updated.\n\n");
+
+	}
+	else if(choice == '2') {
+		int newMonth, newDay, newYear;
+		printf("Enter the number representing the month you acquired the movie.\n");
+                newMonth = readInt(stdin);
+                printf("Enter the day you acquired the movie.\n");
+                newDay = readInt(stdin);
+                printf("Enter the year you acquired the movie.\n");
+                newYear = readInt(stdin);
+		userFile = fopen(filename, "r");
+                newFile = fopen("newFile.log", "w");
+		lineNum = 1;
+		while(1) {
+                tempLine = readLine(userFile);
+                if(feof(userFile)) break;
+                if(lineNum == movieNum) {
+                        fprintf(newFile, "%s\t", strtok(tempLine, "\t"));
+                        fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+                        fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+                        fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+                        fprintf(newFile, "%s\t", strtok(NULL, "\t"));
+			fprintf(newFile, "%02d/%02d/%d\n", newMonth, newDay, newYear); 
+			lineNum++;
+                }
+                else {
+                        fputs(tempLine, newFile);
+                        fprintf(newFile, "\n");
+                        lineNum++;
+                        }
+        }
+        fclose(userFile);
+        fclose(newFile);
+        remove(filename);
+        rename("newFile.log", filename);
+        printf("Date updated.\n\n");
+
+	}
+	else {
+		printf("Error: Not a valid choice. Please try again.\n\n");
+		goto updateChoice;
+	}
+
+
 	goto updateMenu;
 end:
 	freeArray(&a);
