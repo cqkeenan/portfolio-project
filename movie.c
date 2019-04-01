@@ -5,6 +5,13 @@
 #include "movie.h"
 
 
+//Dynamic array functions can be found at https://stackoverflow.com/questions/3536153/c-dynamically-growing-array
+
+//Recursive function for substring search can be found at https://www.geeksforgeeks.org/recursive-function-to-do-substring-search/
+
+
+
+
 void initArray(Array *a, size_t initialSize) {
 	a->array = (struct movie *)malloc(initialSize * sizeof(struct movie));
 	a->used = 0;
@@ -36,7 +43,7 @@ int contains(char *title, char *search) {
 }
 
 void printMovie(Array *a, int key) {
-	printf("%d.\t%s\t%s\t%s\t%s\n", key + 1, a->array[key].primaryTitle, a->array[key].startYear, a->array[key].runtimeMinutes, a->array[key].genres);
+	printf("%d.\t%s\t%s\t%s\t%s\n", key + 1, a->array[key].title, a->array[key].year, a->array[key].runtimeMinutes, a->array[key].genres);
 	return;
 }
 
